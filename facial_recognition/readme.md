@@ -1,5 +1,5 @@
 # About
-This program is to run facial recognition to control access to a lock box with a solenoid. 
+This program is to run facial recognition to control access to a lock box with a servo. 
 
 Facial recognition via a USB webcam.
 
@@ -31,6 +31,8 @@ sudo apt-get install build-essential cmake pkg-config libjpeg-dev libtiff5-dev l
 
 pip install -U numpy
 pip install opencv-python==4.5.3.56
+
+pip install face-recognition
 
 Terminal showed:
 
