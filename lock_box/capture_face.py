@@ -11,8 +11,10 @@ from common import take_image, save_image, detect_faces, draw_boxes, draw_lines,
 folder = sys.argv[1]
 number_of_images = int(sys.argv[2])
 
+print("started")
 def take_images_detect_encode_save(folder='unknown', number_of_images=10, pause=0.2):
     for n in range(number_of_images):
+        print(n)
         unique = uuid4().hex
         #Take image
         image = take_image()

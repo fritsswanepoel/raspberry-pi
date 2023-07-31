@@ -6,9 +6,12 @@ import pickle
 from face_recognition import compare_faces, face_encodings
 
 import lcd_control
-from facial_recognition.common import take_image, detect_faces
+from common import take_image, detect_faces
 
 GPIO.setmode(GPIO.BCM)
+
+##Allowed people
+ALLOWED_PEOPLE = ['frits']
 
 ##Pins
 BUTTON = 23
@@ -67,23 +70,31 @@ def check_face():
 
         for encoding in catalogue["encodings"]:
             results.append(compare_faces(encoding, new_encoding, tolerance=0.6)[0])
-        
-        #print(results)
-        person = 'unknown'
 
-        counter = 0
+        print(results)
+
+        person_results = {}
         for result in results:
-            print(counter, catalogue["names"][counter], result)
             if result:
                 person = catalogue["names"][counter]
-                break
-            counter += 1
+                if person in person_results:
+                    person_results[person]["correct"] += 1
+                else:
+                    person_results[person] = {"correct":1, "incorrect":0}
+            
 
-        print(person)
+
+        #counter = 0
+        #for result in results:
+        #    print(counter, catalogue["names"][counter], result)
+        #    if result:
+        #        person = catalogue["names"][counter]
+        #    counter += 1
+
+        return (True, person)
 
     else:
-        print(f"{len(faces)} faces found")
-        print(faces)
+        return (False, faces)
 
 #Clear LCD
 lcd_control.lcd_byte(0x01, lcd_control.LCD_CMD)
@@ -92,6 +103,15 @@ lcd_control.lcd_byte(0x01, lcd_control.LCD_CMD)
 with open('images/catalogue.pickle','rb') as file:
     catalogue = pickle.load(file)
 
+lcd_control.lcd_string("Ready")
+for count_down in range(5):
+    for led in [LED_GREEN, LED_RED]:
+        for state in [GPIO.HIGH, GPIO.LOW]:
+            GPIO.output(led, state)
+            time.sleep(0.1)
+
+#Clear LCD
+lcd_control.lcd_byte(0x01, lcd_control.LCD_CMD)
 
 while True:
     ##Button press
@@ -109,13 +129,39 @@ while True:
                 for state in [GPIO.HIGH, GPIO.LOW]:
                     GPIO.output(LED_GREEN, state)
                     time.sleep(0.5)
-            check_face()
-            # Open door
-            servo.ChangeDutyCycle(4)
-            time.sleep(0.1)
-            servo.ChangeDutyCycle(0)
-            lock_position = 0
-            lcd_control.lcd_string("Door open!")
+
+            lcd_control.lcd_string("Confirming...")
+            lcd_control.lcd_string("", lcd_control.LCD_LINE_2)
+            check, person = check_face()
+
+            if check and person in ALLOWED_PEOPLE:
+                lcd_control.lcd_string("Access granted")
+                lcd_control.lcd_string(person, lcd_control.LCD_LINE_2)
+                time.sleep(0.5)
+                # Open door
+                servo.ChangeDutyCycle(4)
+                time.sleep(0.1)
+                servo.ChangeDutyCycle(0)
+                lock_position = 0
+                lcd_control.lcd_string("Door open!")
+                lcd_control.lcd_string("", lcd_control.LCD_LINE_2)
+            elif check and person not in ALLOWED_PEOPLE:
+                lcd_control.lcd_string("Access denied!")
+                lcd_control.lcd_string("", lcd_control.LCD_LINE_2)
+                for count_down in range(10):
+                    for state in [GPIO.HIGH, GPIO.LOW]:
+                        GPIO.output(LED_RED, state)
+                        time.sleep(0.1)
+            elif not check:
+                lcd_control.lcd_string("Technical issue")
+                lcd_control.lcd_string("", lcd_control.LCD_LINE_2)
+                if person > 1:
+                    lcd_control.lcd_string(f"{person} faces", lcd_control.LCD_LINE_2)
+                for count_down in range(10):
+                    for state in [GPIO.HIGH, GPIO.LOW]:
+                        GPIO.output(LED_GREEN, state)
+                        time.sleep(0.1)
+
         else:
             lcd_control.lcd_string("Locking in")
             for count_down in range(3):
@@ -129,6 +175,7 @@ while True:
             servo.ChangeDutyCycle(0)
             lock_position = 1
             lcd_control.lcd_string("Door locked")
+            lcd_control.lcd_string("", lcd_control.LCD_LINE_2)
 
         #To display
         time.sleep(3)

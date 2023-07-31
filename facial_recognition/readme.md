@@ -62,6 +62,46 @@ while True:
         break
 
 
+###
+https://gist.github.com/ageitgey/1ac8dbe8572f3f533df6269dab35df65
+
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install build-essential \
+    cmake \
+    gfortran \
+    git \
+    wget \
+    curl \
+    graphicsmagick \
+    libgraphicsmagick1-dev
+
+sudo apt-get install libatlas-base-dev
+
+sudo apt-get install libavcodec-dev \
+    libavformat-dev \
+    libboost-all-dev \
+    libgtk2.0-dev \
+    libjpeg-dev \
+    liblapack-dev \
+    libswscale-dev \
+    pkg-config \
+    python3-dev \
+    python3-numpy \
+    python3-pip \
+    zip
+
+sudo apt-get clean
+
+
+
+sudo pip3 install face_recognition
+
+
+
+###
+
+
 # Face detection
 Tested with: 
 
