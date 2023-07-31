@@ -66,30 +66,31 @@ def check_face():
         new_encoding = face_encodings(image, faces)
 
         #Compare new face to encodings
-        results = []
-
-        for encoding in catalogue["encodings"]:
-            results.append(compare_faces(encoding, new_encoding, tolerance=0.6)[0])
-
-        print(results)
-
         person_results = {}
-        for result in results:
-            if result:
-                person = catalogue["names"][counter]
-                if person in person_results:
-                    person_results[person]["correct"] += 1
-                else:
-                    person_results[person] = {"correct":1, "incorrect":0}
+
+        counter = 0
+        for encoding in catalogue["encodings"]:
+            person = catalogue["names"][counter]
+            if person not in person_results:
+                person_results[person] = {"correct":0.0, "total":0.0}
+
+            if compare_faces(encoding, new_encoding, tolerance=0.6)[0]:
+                person_results[person]["correct"] += 1.0
             
+            person_results[person]["total"] += 1.0
 
+            counter += 1
 
-        #counter = 0
-        #for result in results:
-        #    print(counter, catalogue["names"][counter], result)
-        #    if result:
-        #        person = catalogue["names"][counter]
-        #    counter += 1
+        most_likely = 'unknown'
+        top_score = 0.0
+        for person in person_results:
+            if person_results[person]['correct'] / person_results[person]['total'] > top_score:
+                top_score = person_results[person]['correct'] / person_results[person]['total']
+                most_likely = person
+            
+            if top_score == 1.0:
+                break
+
 
         return (True, person)
 
@@ -104,7 +105,7 @@ with open('images/catalogue.pickle','rb') as file:
     catalogue = pickle.load(file)
 
 lcd_control.lcd_string("Ready")
-for count_down in range(5):
+for count_down in range(3):
     for led in [LED_GREEN, LED_RED]:
         for state in [GPIO.HIGH, GPIO.LOW]:
             GPIO.output(led, state)
