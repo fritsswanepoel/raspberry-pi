@@ -11,7 +11,7 @@ from common import take_image, detect_faces
 GPIO.setmode(GPIO.BCM)
 
 ##Allowed people
-ALLOWED_PEOPLE = ['frits']
+ALLOWED_PEOPLE = ['danielle','frits']
 
 ##Pins
 BUTTON = 23
@@ -91,6 +91,10 @@ def check_face():
             if top_score == 1.0:
                 break
 
+        for per in person_results:
+            print(f"{per.title()} matched {person_results[per]['correct']} / {person_results[per]['total']}")
+
+        print(f"{person.title()} matched most with {int(top_score*100)}%")
 
         return (True, person)
 
@@ -131,13 +135,13 @@ while True:
                     GPIO.output(LED_GREEN, state)
                     time.sleep(0.5)
 
-            lcd_control.lcd_string("Confirming...")
-            lcd_control.lcd_string("", lcd_control.LCD_LINE_2)
+            lcd_control.lcd_string("Confirming")
+            lcd_control.lcd_string("identity...", lcd_control.LCD_LINE_2)
             check, person = check_face()
 
             if check and person in ALLOWED_PEOPLE:
                 lcd_control.lcd_string("Access granted")
-                lcd_control.lcd_string(person, lcd_control.LCD_LINE_2)
+                lcd_control.lcd_string(person.title(), lcd_control.LCD_LINE_2)
                 time.sleep(0.5)
                 # Open door
                 servo.ChangeDutyCycle(4)
@@ -148,15 +152,15 @@ while True:
                 lcd_control.lcd_string("", lcd_control.LCD_LINE_2)
             elif check and person not in ALLOWED_PEOPLE:
                 lcd_control.lcd_string("Access denied!")
-                lcd_control.lcd_string("", lcd_control.LCD_LINE_2)
+                lcd_control.lcd_string(person.title(), lcd_control.LCD_LINE_2)
                 for count_down in range(10):
                     for state in [GPIO.HIGH, GPIO.LOW]:
                         GPIO.output(LED_RED, state)
                         time.sleep(0.1)
             elif not check:
                 lcd_control.lcd_string("Technical issue")
-                lcd_control.lcd_string("", lcd_control.LCD_LINE_2)
-                if person > 1:
+                lcd_control.lcd_string(":(", lcd_control.LCD_LINE_2)
+                if len(person) > 1:
                     lcd_control.lcd_string(f"{person} faces", lcd_control.LCD_LINE_2)
                 for count_down in range(10):
                     for state in [GPIO.HIGH, GPIO.LOW]:

@@ -3,7 +3,12 @@ from uuid import uuid4
 
 import cv2
 
-from shared.box_converter import *
+
+def xywh_to_tlbr(coord):
+    return [coord[1], coord[0]+coord[2], coord[1]+coord[3], coord[0]]
+
+def tlbr_to_xywh(coord):
+    return [coord[3], coord[0], coord[1]-coord[3], coord[2]-coord[0]]
 
 
 def take_image():
