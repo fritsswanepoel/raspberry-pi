@@ -12,6 +12,7 @@ GPIO.setmode(GPIO.BCM)
 
 ##Allowed people
 ALLOWED_PEOPLE = ['danielle','frits']
+MATCH_SCORE_THRESHOLD = 0.9
 
 ##Pins
 BUTTON = 23
@@ -88,18 +89,18 @@ def check_face():
                 top_score = person_results[person]['correct'] / person_results[person]['total']
                 most_likely = person
             
-            if top_score == 1.0:
-                break
+            # if top_score == 1.0:
+            #     break
 
         for per in person_results:
             print(f"{per.title()} matched {person_results[per]['correct']} / {person_results[per]['total']}")
 
-        print(f"{person.title()} matched most with {int(top_score*100)}%")
+        print(f"{most_likely.title()} matched most with {int(top_score*100)}%")
 
-        return (True, person)
+        return (True, most_likely, top_score)
 
     else:
-        return (False, faces)
+        return (False, faces, 0.00)
 
 #Clear LCD
 lcd_control.lcd_byte(0x01, lcd_control.LCD_CMD)
@@ -137,19 +138,27 @@ while True:
 
             lcd_control.lcd_string("Confirming")
             lcd_control.lcd_string("identity...", lcd_control.LCD_LINE_2)
-            check, person = check_face()
+            check, person, score = check_face()
 
             if check and person in ALLOWED_PEOPLE:
-                lcd_control.lcd_string("Access granted")
-                lcd_control.lcd_string(person.title(), lcd_control.LCD_LINE_2)
-                time.sleep(0.5)
-                # Open door
-                servo.ChangeDutyCycle(4)
-                time.sleep(0.1)
-                servo.ChangeDutyCycle(0)
-                lock_position = 0
-                lcd_control.lcd_string("Door open!")
-                lcd_control.lcd_string("", lcd_control.LCD_LINE_2)
+                if score >= MATCH_SCORE_THRESHOLD:
+                    lcd_control.lcd_string("Access granted")
+                    lcd_control.lcd_string(person.title(), lcd_control.LCD_LINE_2)
+                    time.sleep(0.5)
+                    # Open door
+                    servo.ChangeDutyCycle(4)
+                    time.sleep(0.1)
+                    servo.ChangeDutyCycle(0)
+                    lock_position = 0
+                    lcd_control.lcd_string("Door open!")
+                    lcd_control.lcd_string("", lcd_control.LCD_LINE_2)
+                else:
+                    lcd_control.lcd_string("Is that you")
+                    lcd_control.lcd_string(f"{person.title()}?", lcd_control.LCD_LINE_2)
+                for count_down in range(10):
+                    for state in [GPIO.HIGH, GPIO.LOW]:
+                        GPIO.output(LED_GREEN, state)
+                        time.sleep(0.1)
             elif check and person not in ALLOWED_PEOPLE:
                 lcd_control.lcd_string("Access denied!")
                 lcd_control.lcd_string(person.title(), lcd_control.LCD_LINE_2)
